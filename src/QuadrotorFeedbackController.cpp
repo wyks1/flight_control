@@ -10,16 +10,19 @@ QuadrotorFeedbackController::QuadrotorFeedbackController(geometry_msgs::PoseStam
   position_error_sum_ << 0, 0, 0;
   velocity_error_sum_ << 0, 0, 0;
 
+  position_error_before_<<0,0,0;
+  velocity_error_before_<<0,0,0;
+
   // thrust eval
   eval_ptr_ = 0;
 
   // hover PID params init
-  kp_hover_x_ = 1;
-  kp_hover_y_ = 1;
-  kp_hover_z_ = 1.6;
-  kp_hover_vx_ = 0.2;
-  kp_hover_vy_ = -0.2;
-  kp_hover_vz_ = 0.11;
+  kp_hover_x_ = 1.5;
+  kp_hover_y_ = 1.5;
+  kp_hover_z_ = 0.9;
+  kp_hover_vx_ = 0.22;
+  kp_hover_vy_ = -0.22;
+  kp_hover_vz_ = 0.052;
 
   // ki_hover_x_ = 0;
   // ki_hover_y_ = 0;
@@ -27,12 +30,12 @@ QuadrotorFeedbackController::QuadrotorFeedbackController(geometry_msgs::PoseStam
   // ki_hover_vx_ = 0;
   // ki_hover_vy_ = 0;
   // ki_hover_vz_ = 0;
-  ki_hover_x_ = 0.1;
+  ki_hover_x_ = 0.11;
   ki_hover_y_ = 0;
-  ki_hover_z_ = 0.03;
-  ki_hover_vx_ = 0.1;
+  ki_hover_z_ = 0.01;
+  ki_hover_vx_ = 0.11;
   ki_hover_vy_ = -0.1;
-  ki_hover_vz_ = 0.12;
+  ki_hover_vz_ = 0.03;
 
   kd_hover_x_ = 0;
   kd_hover_y_ = 0;
@@ -96,11 +99,38 @@ void QuadrotorFeedbackController::positionControlFeedback(){
   if(position_i_z_ < -10)
     position_i_z_ = -10;
 
+  position_int.vector.x = position_i_x_;
+  position_int.vector.y = position_i_y_;
+  position_int.vector.z = position_i_z_;
+ /*ROS_INFO("the position_i_x_is %f",position_i_x_ );
+  ROS_INFO("the position_i_y_is %f",position_i_y_ );
+  ROS_INFO("the position_i_z_is %f",position_i_z_ );*/
+  double position_d_x_=kd_hover_x_*(-position_error_[0] + position_error_before_[0])*LOOP_FREQUENCY;
+  if(position_d_x_ > 5)
+    position_d_x_ = 5;
+  if(position_d_x_ < -5)
+    position_d_x_ = -5;
+
+  double position_d_y_=kd_hover_y_*(-position_error_[1] + position_error_before_[1])*LOOP_FREQUENCY;
+  if(position_d_y_ > 5)
+    position_d_y_ = 5;
+  if(position_d_x_ < -5)
+    position_d_x_ = -5;
+
+  double position_d_z_=kd_hover_z_*(-position_error_[2] + position_error_before_[2])*LOOP_FREQUENCY;
+  if(position_d_y_ > 10)
+    position_d_y_ = 10;
+  if(position_d_x_ < -10)
+    position_d_x_ = -10;
+
+  position_error_before_=position_error_;
+  
+
   //velocity_setpoint_.twist.linear.x = kp_hover_x_ * position_error_[0]+ position_i_x_;
   //velocity_setpoint_.twist.linear.y = kp_hover_y_ * position_error_[1]+ position_i_y_;
-  velocity_setpoint_.twist.linear.x = kp_hover_x_ * position_error_[0]+ position_i_x_;
-  velocity_setpoint_.twist.linear.y = kp_hover_y_ * position_error_[1]+ position_i_y_;
-  velocity_setpoint_.twist.linear.z = kp_hover_z_ * position_error_[2] + position_i_z_;
+  velocity_setpoint_.twist.linear.x = kp_hover_x_ * position_error_[0]+ position_i_x_+position_d_x_;
+  velocity_setpoint_.twist.linear.y = kp_hover_y_ * position_error_[1]+ position_i_y_+position_d_y_;
+  velocity_setpoint_.twist.linear.z = kp_hover_z_ * position_error_[2] + position_i_z_+position_d_z_;
   // velocity_setpoint_.twist.linear.x = 1;
   // velocity_setpoint_.twist.linear.y = 0.5;
   // velocity_setpoint_.twist.linear.z = 0.2;
@@ -112,6 +142,7 @@ void QuadrotorFeedbackController::positionControlFeedback(){
 
   data_ptr->pub_setpoint_position_ = position_setpoint_;
   data_ptr->pub_setpoint_velocity_ = velocity_setpoint_;
+  data_ptr->pub_position_int=position_int;
 
   // std::cout << data_ptr->pub_setpoint_position_ << std::endl;
   
@@ -167,7 +198,33 @@ void QuadrotorFeedbackController::velocityControlFeedback(){
   if(velocity_i_z_ < -1)
     velocity_i_z_ = -1;
 
-  double thrust_cmd_ = 0.40+ kp_hover_vz_ * velocity_error_[2] + velocity_i_z_;
+  double velocity_d_x_ = kd_hover_vx_* (-velocity_error_[0] + velocity_error_before_[0])*LOOP_FREQUENCY; 
+  if(velocity_d_x_ > 0.8)
+    velocity_d_x_ = 0.8;
+  if(velocity_d_x_ < -0.8)
+    velocity_d_x_ = -0.8; 
+
+  double velocity_d_y_ = kd_hover_vy_ *  (-velocity_error_[1] + velocity_error_before_[1])*LOOP_FREQUENCY; 
+  if(velocity_d_y_ > 0.8)
+    velocity_d_y_ = 0.8;
+  if(velocity_d_y_ < -0.8)
+    velocity_d_y_ = -0.8; 
+
+  double velocity_d_z_ = kd_hover_vz_ * (-velocity_error_[2] + velocity_error_before_[2])*LOOP_FREQUENCY; 
+  if(velocity_d_z_ > 1)
+    velocity_d_z_ = 1;
+  if(velocity_d_z_ < -1)
+    velocity_d_z_ = -1;
+
+  velocity_int.vector.x = velocity_i_x_;
+  velocity_int.vector.y = velocity_i_y_;
+  velocity_int.vector.z = velocity_i_z_;
+
+  data_ptr->pub_velocity_int=velocity_int;
+
+velocity_error_before_ = velocity_error_;
+
+  double thrust_cmd_ = 0.380+ kp_hover_vz_ * velocity_error_[2] + velocity_i_z_+velocity_d_z_;
   if(thrust_cmd_ >= 0.65)
     thrust_cmd_ = 0.65;
   if(thrust_cmd_ <= 0.01)
@@ -177,13 +234,13 @@ void QuadrotorFeedbackController::velocityControlFeedback(){
   {
       ROS_INFO("the t265 is wrong");
      // printf("z is%f", cur_position_(2));
-      thrust_cmd_ = 0.40;
+      thrust_cmd_ = 0.380;
 
   }
-  double theta_cmd_ = kp_hover_vx_ * velocity_error_[0]+  velocity_i_x_;
+  double theta_cmd_ = kp_hover_vx_ * velocity_error_[0]+  velocity_i_x_+ velocity_d_x_;
   
   // double theta_cmd_ =0 / 180 *PI;
-  double phi_cmd_ = kp_hover_vy_ * velocity_error_[1] +  velocity_i_y_;
+  double phi_cmd_ = kp_hover_vy_ * velocity_error_[1] +  velocity_i_y_+ velocity_d_y_;
   // double phi_cmd_ = 0 / 180 *PI;
   double psi_cmd_ = 0.0f;
   if(theta_cmd_ > 0.5)
@@ -307,11 +364,31 @@ void QuadrotorFeedbackController::positionPlanningFeedback(geometry_msgs::PoseSt
   if(position_i_z_ < -10)
     position_i_z_ = -10;
 
-  velocity_setpoint_.twist.linear.x = kp_hover_x_ * position_error_[0]+ position_i_x_;
-  velocity_setpoint_.twist.linear.y = kp_hover_y_ * position_error_[1]+ position_i_y_;
+double position_d_x_=kd_hover_x_*(-position_error_[0] + position_error_before_[0])*LOOP_FREQUENCY;
+  if(position_d_x_ > 5)
+    position_d_x_ = 5;
+  if(position_d_x_ < -5)
+    position_d_x_ = -5;
+
+  double position_d_y_=kd_hover_y_*(-position_error_[1] + position_error_before_[1])*LOOP_FREQUENCY;
+  if(position_d_y_ > 5)
+    position_d_y_ = 5;
+  if(position_d_x_ < -5)
+    position_d_x_ = -5;
+
+  double position_d_z_=kd_hover_z_*(-position_error_[2] + position_error_before_[2])*LOOP_FREQUENCY;
+  if(position_d_y_ > 10)
+    position_d_y_ = 10;
+  if(position_d_x_ < -10)
+    position_d_x_ = -10;
+
+  position_error_before_=position_error_;
+
+  velocity_setpoint_.twist.linear.x = kp_hover_x_ * position_error_[0]+ position_i_x_+position_d_x_;
+  velocity_setpoint_.twist.linear.y = kp_hover_y_ * position_error_[1]+ position_i_y_+position_d_y_;
   //velocity_setpoint_.twist.linear.x = kp_hover_x_ * position_error_[0];
   //velocity_setpoint_.twist.linear.y = kp_hover_y_ * position_error_[1];
-  velocity_setpoint_.twist.linear.z = kp_hover_z_ * position_error_[2]+ position_i_z_;
+  velocity_setpoint_.twist.linear.z = kp_hover_z_ * position_error_[2]+ position_i_z_+position_d_z_;
   // velocity_setpoint_.twist.linear.x = 1;
   // velocity_setpoint_.twist.linear.y = 0.5;
   // velocity_setpoint_.twist.linear.z = 0.2;
@@ -377,7 +454,28 @@ void QuadrotorFeedbackController::velocityPlanningFeedback(double psi_cmd){
     velocity_i_z_ = 1;
   if(velocity_i_z_ < -1)
     velocity_i_z_ = -1;
-  double thrust_cmd_ = 0.40+ kp_hover_vz_ * velocity_error_[2] + velocity_i_z_;
+
+    double velocity_d_x_ = kd_hover_vx_* (-velocity_error_[0] + velocity_error_before_[0])*LOOP_FREQUENCY; 
+  if(velocity_d_x_ > 0.8)
+    velocity_d_x_ = 0.8;
+  if(velocity_d_x_ < -0.8)
+    velocity_d_x_ = -0.8; 
+
+  double velocity_d_y_ = kd_hover_vy_ *  (-velocity_error_[1] + velocity_error_before_[1])*LOOP_FREQUENCY; 
+  if(velocity_d_y_ > 0.8)
+    velocity_d_y_ = 0.8;
+  if(velocity_d_y_ < -0.8)
+    velocity_d_y_ = -0.8; 
+
+  double velocity_d_z_ = kd_hover_vz_ * (-velocity_error_[2] + velocity_error_before_[2])*LOOP_FREQUENCY; 
+  if(velocity_d_z_ > 1)
+    velocity_d_z_ = 1;
+  if(velocity_d_z_ < -1)
+    velocity_d_z_ = -1;
+
+velocity_error_before_ = velocity_error_;
+
+  double thrust_cmd_ = 0.380+ kp_hover_vz_ * velocity_error_[2] + velocity_i_z_+velocity_d_z_;
   if(thrust_cmd_ >= 0.65)
     thrust_cmd_ = 0.65;
   if(thrust_cmd_ <= 0.01)
@@ -386,14 +484,14 @@ void QuadrotorFeedbackController::velocityPlanningFeedback(double psi_cmd){
   if(current_position_(2)<0)
   {
       printf("the t265 is wrong");
-      thrust_cmd_ = 0.40;
+      thrust_cmd_ = 0.380;
 
   }
 
-  double theta_cmd_ = kp_hover_vx_ * velocity_error_[0] + velocity_i_x_;
+  double theta_cmd_ = kp_hover_vx_ * velocity_error_[0] + velocity_i_x_+velocity_d_x_;
   
   // double theta_cmd_ =0 / 180 *PI;
-  double phi_cmd_ = kp_hover_vy_ * velocity_error_[1] +  velocity_i_y_;
+  double phi_cmd_ = kp_hover_vy_ * velocity_error_[1] +  velocity_i_y_+velocity_d_y_;
   // double phi_cmd_ = 0 / 180 *PI;
   if(theta_cmd_ > 0.5)
     theta_cmd_ = 0.5;
@@ -420,8 +518,8 @@ void QuadrotorFeedbackController::velocityPlanningFeedback(double psi_cmd){
   
   double yaw_rate_cmd = 6.0f * (yaw_diff);
   
-  tf::Quaternion oq_;
-  oq_.setRPY(phi_cmd_, theta_cmd_, psi_cmd_ - psi_);
+ // tf::Quaternion oq_;
+ // oq_.setRPY(phi_cmd_, theta_cmd_, psi_cmd_ - psi_);
   // thrust_attitude_cmd_.orientation.w = oq_.w();
   // thrust_attitude_cmd_.orientation.x = oq_.x();
   // thrust_attitude_cmd_.orientation.y = oq_.y();
@@ -480,6 +578,12 @@ void QuadrotorFeedbackController::reset_error_sum_both_pv(){
   velocity_error_sum_(0) = 0;
   velocity_error_sum_(1) = 0;
   velocity_error_sum_(2) = 0;
+  position_error_before_(0)=0;
+  position_error_before_(1)=1;
+  position_error_before_(2)=2;
+  velocity_error_before_(0)=0;
+  velocity_error_before_(1)=1;
+  velocity_error_before_(2)=2;
 
 }
 void QuadrotorFeedbackController::get_params(const ros::NodeHandle &nh){

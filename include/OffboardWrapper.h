@@ -63,6 +63,9 @@ class OffboardWrapper{
             ros::Publisher attitude_setpoint_pub;
             ros::Publisher attitude_cureuler_pub;
             ros::Publisher wrapper_new_velocity_pub;
+
+            ros::Publisher wrapper_position_int_pub;
+            ros::Publisher wrapper_velocity_int_pub;
         }m_Publisher;
 
         struct DataCentre wrap_data;

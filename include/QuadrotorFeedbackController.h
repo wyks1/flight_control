@@ -40,7 +40,7 @@ struct DataCentre{
     std_msgs::Bool is_ready_;
     geometry_msgs::PoseStamped pub_setpoint_position_;
     geometry_msgs::TwistStamped pub_setpoint_velocity_;
-    geometry_msgs::Vector3Stamped pub_setpoint_attitude_, pub_euler_attitude_, pub_new_velocity;
+    geometry_msgs::Vector3Stamped pub_setpoint_attitude_, pub_euler_attitude_, pub_new_velocity,pub_position_int,pub_velocity_int;
     double yaw;
 
     double thrust_eval[5];
@@ -52,6 +52,7 @@ class QuadrotorFeedbackController{
         //data
         geometry_msgs::PoseStamped position_setpoint_;
         geometry_msgs::TwistStamped velocity_setpoint_;
+        geometry_msgs::Vector3Stamped  position_int,velocity_int;
         mavros_msgs::AttitudeTarget thrust_attitude_cmd_;
 
 
@@ -68,6 +69,7 @@ class QuadrotorFeedbackController{
 
         Eigen::Vector3d current_position_, current_velocity_, current_attitude_;
         Eigen::Vector3d position_error_sum_, velocity_error_sum_;
+        Eigen::Vector3d position_error_before_, velocity_error_before_;
 
     public:
         struct DataCentre *data_ptr;

@@ -16,6 +16,9 @@ OffboardWrapper::OffboardWrapper(geometry_msgs::PoseStamped position_setpoint, s
   m_Publisher.wrapper_status_pub = nh.advertise<std_msgs::Bool>(node_id + "/status", 10);
   m_Publisher.wrapper_new_velocity_pub = nh.advertise<geometry_msgs::Vector3Stamped>(node_id + "/new_velocity", 10);
 
+  m_Publisher.wrapper_position_int_pub = nh.advertise<geometry_msgs::Vector3Stamped>(node_id + "/pid_position_int", 10);
+  m_Publisher.wrapper_velocity_int_pub = nh.advertise<geometry_msgs::Vector3Stamped>(node_id + "/pid_velocity_int", 10);
+
   // subscriber();
   subscriber();
   start_position_setpoint_ = position_setpoint;
@@ -95,6 +98,9 @@ void OffboardWrapper::topicPublish()
   m_Publisher.velocity_setpoint_pub.publish(wrap_data.pub_setpoint_velocity_);
   m_Publisher.attitude_setpoint_pub.publish(wrap_data.pub_setpoint_attitude_);
   m_Publisher.attitude_cureuler_pub.publish(wrap_data.pub_euler_attitude_);
+
+  m_Publisher.wrapper_position_int_pub.publish(wrap_data.pub_position_int);
+  m_Publisher.wrapper_velocity_int_pub.publish(wrap_data.pub_velocity_int);
 
   wrap_data.is_ready_.data = current_status_;
   m_Publisher.wrapper_status_pub.publish(wrap_data.is_ready_);
