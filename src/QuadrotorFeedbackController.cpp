@@ -19,7 +19,7 @@ QuadrotorFeedbackController::QuadrotorFeedbackController(geometry_msgs::PoseStam
   // hover PID params init
   kp_hover_x_ = 1.4;
   kp_hover_y_ = 1.4;
-  kp_hover_z_ = 1.1;
+  kp_hover_z_ = 1.05;
   kp_hover_vx_ = 0.22;
   kp_hover_vy_ = -0.22;
   kp_hover_vz_ = 0.07;
@@ -32,10 +32,10 @@ QuadrotorFeedbackController::QuadrotorFeedbackController(geometry_msgs::PoseStam
   // ki_hover_vz_ = 0;
   ki_hover_x_ = 0.05;
   ki_hover_y_ = 0.05;
-  ki_hover_z_ = 0.025;
+  ki_hover_z_ = 0.03;
   ki_hover_vx_ = 0.1;
   ki_hover_vy_ = -0.1;
-  ki_hover_vz_ = 0.1;
+  ki_hover_vz_ = 0.09;
 
   kd_hover_x_ = 0;
   kd_hover_y_ = 0;
@@ -160,7 +160,7 @@ void QuadrotorFeedbackController::velocityPlanningFeedback(double psi_cmd){
     
   // else
     // velocity_error_sum_ = Eigen::Vector3d(0,0,0); 
-  velocity_error_[2] = velocity_error_[2] -0.05;
+  velocity_error_[2] = velocity_error_[2] -0.04;
   double ki_hover_vz_use;
   double ki_hover_vy_use;
   double ki_hover_vx_use;
