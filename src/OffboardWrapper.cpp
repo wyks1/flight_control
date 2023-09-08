@@ -290,8 +290,8 @@ void OffboardWrapper::run()
         c1.reset_error_sum_both_pv();
         ROS_INFO("RESET I");
       }
-      c1.positionControlFeedback();
-      c1.velocityControlFeedback();
+      c1.positionPlanningFeedback(start_position_setpoint_);
+      c1.velocityPlanningFeedback(0);
       start_planning_t_ = ros::Time::now();
       break;
 
@@ -300,8 +300,8 @@ void OffboardWrapper::run()
       // if(ready_flag) current_status_ = PLANNING;
       current_status_ = PLANNING;
       c1.loadLatestData();
-      c1.positionControlFeedback();
-      c1.velocityControlFeedback();
+      c1.positionPlanningFeedback(start_position_setpoint_);
+      c1.velocityPlanningFeedback(0);
       start_planning_t_ = ros::Time::now();
       break;
 
@@ -311,15 +311,9 @@ void OffboardWrapper::run()
       c1.loadLatestData();
       c1.positionPlanningFeedback(planning_position_setpoint_);
       c1.velocityPlanningFeedback(psi_cmd_);
-
       break;
 
-    case END:
-      // printf("aggressive flight is done!!\n");
-      c3.loadLatestData();
-      c3.positionControlFeedback();
-      c3.velocityControlFeedback();
-      break;
+      
     }
     topicPublish();
     ros::spinOnce();

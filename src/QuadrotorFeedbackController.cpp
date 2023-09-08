@@ -19,10 +19,17 @@ QuadrotorFeedbackController::QuadrotorFeedbackController(geometry_msgs::PoseStam
   // hover PID params init
   kp_hover_x_ = 1.5;
   kp_hover_y_ = 1.5;
+<<<<<<< HEAD
   kp_hover_z_ = 0.9;
   kp_hover_vx_ = 0.22;
   kp_hover_vy_ = -0.22;
   kp_hover_vz_ = 0.052;
+=======
+  kp_hover_z_ = 1.0;
+  kp_hover_vx_ = 0.22;
+  kp_hover_vy_ = -0.22;
+  kp_hover_vz_ = 0.06;
+>>>>>>> save in 9.8
 
   // ki_hover_x_ = 0;
   // ki_hover_y_ = 0;
@@ -30,12 +37,21 @@ QuadrotorFeedbackController::QuadrotorFeedbackController(geometry_msgs::PoseStam
   // ki_hover_vx_ = 0;
   // ki_hover_vy_ = 0;
   // ki_hover_vz_ = 0;
+<<<<<<< HEAD
   ki_hover_x_ = 0.11;
   ki_hover_y_ = 0;
   ki_hover_z_ = 0.01;
   ki_hover_vx_ = 0.11;
   ki_hover_vy_ = -0.1;
   ki_hover_vz_ = 0.03;
+=======
+  ki_hover_x_ = 0.05;
+  ki_hover_y_ = 0.05;
+  ki_hover_z_ = 0.04;
+  ki_hover_vx_ = 0.1;
+  ki_hover_vy_ = -0.1;
+  ki_hover_vz_ = 0.1;
+>>>>>>> save in 9.8
 
   kd_hover_x_ = 0;
   kd_hover_y_ = 0;
@@ -48,6 +64,7 @@ QuadrotorFeedbackController::QuadrotorFeedbackController(geometry_msgs::PoseStam
 QuadrotorFeedbackController::~QuadrotorFeedbackController(){
 }
 
+<<<<<<< HEAD
 void QuadrotorFeedbackController::positionControlFeedback(){
   Eigen::Vector3d position_cmd_(position_setpoint_.pose.position.x, position_setpoint_.pose.position.y, position_setpoint_.pose.position.z);
   Eigen::Vector3d position_error_ = position_cmd_ - current_position_;
@@ -313,6 +330,8 @@ velocity_error_before_ = velocity_error_;
   // std::cout << "psi_cmd: " << psi_cmd_*180/PI << std::endl;
 }
 
+=======
+>>>>>>> save in 9.8
 void QuadrotorFeedbackController::positionPlanningFeedback(geometry_msgs::PoseStamped position_setpoint){
   position_setpoint_ = position_setpoint;
   Eigen::Vector3d position_cmd_(position_setpoint_.pose.position.x, position_setpoint_.pose.position.y, position_setpoint_.pose.position.z);
@@ -364,6 +383,13 @@ void QuadrotorFeedbackController::positionPlanningFeedback(geometry_msgs::PoseSt
   if(position_i_z_ < -10)
     position_i_z_ = -10;
 
+<<<<<<< HEAD
+=======
+  position_int.vector.x = position_i_x_;
+  position_int.vector.y = position_i_y_;
+  position_int.vector.z = position_i_z_;
+
+>>>>>>> save in 9.8
 double position_d_x_=kd_hover_x_*(-position_error_[0] + position_error_before_[0])*LOOP_FREQUENCY;
   if(position_d_x_ > 5)
     position_d_x_ = 5;
@@ -400,7 +426,7 @@ double position_d_x_=kd_hover_x_*(-position_error_[0] + position_error_before_[0
 
   data_ptr->pub_setpoint_position_ = position_setpoint_;
   data_ptr->pub_setpoint_velocity_ = velocity_setpoint_;
-
+  data_ptr->pub_position_int=position_int;
   // std::cout << data_ptr->pub_setpoint_position_ << std::endl;
   
 }
@@ -409,7 +435,6 @@ void QuadrotorFeedbackController::velocityPlanningFeedback(double psi_cmd){
   Eigen::Vector3d velocity_cmd_(velocity_setpoint_.twist.linear.x, velocity_setpoint_.twist.linear.y, velocity_setpoint_.twist.linear.z);
   // std::cout<<"!!!"<<velocity_cmd_<<std::endl;
   Eigen::Vector3d velocity_error_  = velocity_cmd_ - current_velocity_;
-
   double psi_ = current_attitude_[2];
   // double psi_ =  0.0;
   /*Eigen::Matrix3d R_E_B_;
@@ -422,7 +447,7 @@ void QuadrotorFeedbackController::velocityPlanningFeedback(double psi_cmd){
     
   // else
     // velocity_error_sum_ = Eigen::Vector3d(0,0,0); 
-
+  velocity_error_[2] = velocity_error_[2] -0.15;
   double ki_hover_vz_use;
   double ki_hover_vy_use;
   double ki_hover_vx_use;
@@ -455,6 +480,14 @@ void QuadrotorFeedbackController::velocityPlanningFeedback(double psi_cmd){
   if(velocity_i_z_ < -1)
     velocity_i_z_ = -1;
 
+<<<<<<< HEAD
+=======
+  velocity_int.vector.x = velocity_i_x_;
+  velocity_int.vector.y = velocity_i_y_;
+  velocity_int.vector.z = velocity_i_z_;
+
+
+>>>>>>> save in 9.8
     double velocity_d_x_ = kd_hover_vx_* (-velocity_error_[0] + velocity_error_before_[0])*LOOP_FREQUENCY; 
   if(velocity_d_x_ > 0.8)
     velocity_d_x_ = 0.8;
@@ -543,6 +576,8 @@ velocity_error_before_ = velocity_error_;
   
   data_ptr->thrust_attitude_cmd_ = thrust_attitude_cmd_;
 
+ data_ptr->pub_velocity_int=velocity_int;
+ 
   data_ptr->pub_euler_attitude_.vector.x = current_attitude_[0]*180/PI;
   data_ptr->pub_euler_attitude_.vector.y = current_attitude_[1]*180/PI;
   data_ptr->pub_euler_attitude_.vector.z = current_attitude_[2]*180/PI;

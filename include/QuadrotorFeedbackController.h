@@ -80,8 +80,8 @@ class QuadrotorFeedbackController{
 
         void loadLatestData();
         void reset_error_sum_both_pv();
-        void positionControlFeedback();
-        void velocityControlFeedback();
+        //void positionControlFeedback();
+        //void velocityControlFeedback();
 	void positionPlanningFeedback(geometry_msgs::PoseStamped position_setpoint);
         void velocityPlanningFeedback(double psi_cmd);
         void get_params(const ros::NodeHandle &nh);
