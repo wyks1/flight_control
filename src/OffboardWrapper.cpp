@@ -204,17 +204,17 @@ void OffboardWrapper::rc_state_Callback(const mavros_msgs::VFR_HUD::ConstPtr &ms
    tf::Quaternion rq;
    Vector3d cur_position_(wrapper_current_vrpn_.pose.pose.position.x, 
                          wrapper_current_vrpn_.pose.pose.position.y, 
-                         wrapper_current_vrpn_.pose.pose.position.z);
+                         msg1->pose.position.z);
 
 
    Vector3d cur_velocity_(wrapper_current_vrpn_.twist.twist.linear.x,
                          wrapper_current_vrpn_.twist.twist.linear.y,
-                         wrapper_current_vrpn_.twist.twist.linear.z);
-  ROS_INFO("The cur_x is %f",wrapper_current_vrpn_.pose.pose.position.x);
+                         msg1->pose.orientation.z);
+  /*ROS_INFO("The cur_x is %f",wrapper_current_vrpn_.pose.pose.position.x);
   ROS_INFO("The cur_y is %f",wrapper_current_vrpn_.pose.pose.position.y);
   ROS_INFO("The cur_z is %f",wrapper_current_vrpn_.pose.pose.position.z);
 
-  ROS_INFO("The lidar_z is %f",msg1->pose.position.z);
+  ROS_INFO("The lidar_z is %f",msg1->pose.position.z);*/
   // Vector3d cur_velosity_;
   // cur_velosity_ = (cur_position_ - wrap_data.wrapper_last_position_) / (ros::Time::now() - wrap_data.last_v_time).toNSec();
   // wrap_data.last_v_time = ros::Time::now();
