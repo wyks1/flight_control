@@ -28,9 +28,11 @@ def getTFminiData():
 
    rospy.init_node('Lidar_position', anonymous=True)
    cnt = VelocityBody()
+   last_time = time()
    rate = rospy.Rate(100)
    pos_est_pub = PoseStamped()
    while True:
+      current_time = time()
       count = ser.in_waiting #获取接收到的数据长度
       if count > 8:
          recv = ser.read(9)#读取数据并将数据存入recv
@@ -40,23 +42,12 @@ def getTFminiData():
             distance = np.int16(recv[2] + np.int16(recv[3] << 8))
             strength = recv[4] + recv[5] * 256
             temp = (np.int16(recv[6] + np.int16(recv[7] << 8)))/8-256 #计算芯片温度
-            #print('distance = %5d  strengh = %5d  temperature = %5d' % (distance, strength, temp))
+            print('distance = %5d  strengh = %5d  temperature = %5d' % (distance, strength, temp))
             pos_est_pub.pose.position.z = distance/100
+            pos_est_pub.header.stamp=rospy.Time.now()
             cnt.pos_pub.publish(pos_est_pub)
             rate.sleep()
             ser.reset_input_buffer()
-         if recv[0] == 'Y' and recv[1] == 'Y':  # python2 //此处标示出文件读取成功
-            lowD = int(recv[2].encode('hex'), 16)
-            highD = int(recv[3].encode('hex'), 16)
-            lowS = int(recv[4].encode('hex'), 16)
-            highS = int(recv[5].encode('hex'), 16)
-            lowT = int(recv[6].encode('hex'), 16)
-            highT = int(recv[7].encode('hex'), 16)
-            distance = np.int16(lowD + np.int16(highD << 8))
-            strength = lowS + highS * 256
-            temp = (np.int16(lowD + np.int16(highD << 8)))/8-256 #计算芯片温度
-            print('distance = %5d  strengh = %5d  temperature = %5d' % (distance, strength, temp))
-
       else:
          time.sleep(0.005) #50ms
 if __name__ == '__main__':

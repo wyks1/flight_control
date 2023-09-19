@@ -6,6 +6,10 @@
 #include <fstream>
 #include <iostream>
 #include <time.h>
+#include <message_filters/subscriber.h>
+#include <message_filters/time_synchronizer.h>
+#include <message_filters/sync_policies/approximate_time.h>
+#include <message_filters/sync_policies/exact_time.h>
 
 class OffboardWrapper{
     private:       
@@ -26,7 +30,11 @@ class OffboardWrapper{
 
         void isAtSetpoint();
         void topicPublish();
+        typedef message_filters::sync_policies::ApproximateTime<nav_msgs::Odometry,
+                                                          geometry_msgs::PoseStamped> SyncPolicyT265Lidar;
+        typedef shared_ptr<message_filters::Synchronizer<SyncPolicyT265Lidar>> SynchronizerT265Lidar;
 
+        SynchronizerT265Lidar sync_t265_lidar_;
 
     public:
         OffboardWrapper(geometry_msgs::PoseStamped position_setpoint, std::string id, std::string node_id, std::string dataset);
@@ -43,6 +51,9 @@ class OffboardWrapper{
             ros::Subscriber wrapper_state_sub_;   
             ros::Subscriber wrapper_current_sub_;
             ros::Subscriber wrapper_vrpn_sub_;
+            ros::Subscriber wrapper_lidar_sub_;
+            shared_ptr<message_filters::Subscriber<nav_msgs::Odometry>> wrapper_pos_sub_;
+            shared_ptr<message_filters::Subscriber<geometry_msgs::PoseStamped>> wrapper_Lidar_sub_;
             ros::Subscriber wrapper_velocity_sub_;
             ros::Subscriber wrapper_status_sub;
 
@@ -75,7 +86,7 @@ class OffboardWrapper{
         void rc_state_Callback(const mavros_msgs::VFR_HUD::ConstPtr& msg);
         void stateCallback(const mavros_msgs::State::ConstPtr& msg);
         //void visualCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
-        void visualCallback(const nav_msgs::Odometry::ConstPtr& msg);
+        void visualCallback(const nav_msgs::Odometry::ConstPtr& msg, const geometry_msgs::PoseStampedConstPtr& msg1);
         void velocityCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
         void accCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
         void localCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);

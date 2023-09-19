@@ -119,10 +119,15 @@ void OffboardWrapper::subscriber()
                                                       10, 
                                                       &OffboardWrapper::rc_state_Callback, 
                                                       this);
-  m_Subscriber.wrapper_vrpn_sub_ = nh.subscribe<nav_msgs::Odometry>("/t265/odom/sample",
+  /*m_Subscriber.wrapper_vrpn_sub_ = nh.subscribe<nav_msgs::Odometry>("/t265/odom/sample",
                                                       10, 
                                                       &OffboardWrapper::visualCallback, 
-                                                      this);
+                                                      this);*/
+  m_Subscriber.wrapper_pos_sub_.reset(new message_filters::Subscriber<nav_msgs::Odometry>(nh, "/t265/odom/sample", 10));
+  m_Subscriber.wrapper_Lidar_sub_.reset(new message_filters::Subscriber<geometry_msgs::PoseStamped>(nh,"/Lidar_position", 10));
+  sync_t265_lidar_.reset(new message_filters::Synchronizer<OffboardWrapper::SyncPolicyT265Lidar>(
+      OffboardWrapper::SyncPolicyT265Lidar(100), *m_Subscriber.wrapper_pos_sub_, *m_Subscriber.wrapper_Lidar_sub_));
+  sync_t265_lidar_->registerCallback(boost::bind(&OffboardWrapper::visualCallback, this, _1, _2));
   // in simulator
   // m_Subscriber.wrapper_vrpn_sub_ = nh.subscribe<nav_msgs::Odometry>(uav_id + "/mavros/local_position/odom",
   //                                                                   10,
@@ -192,8 +197,10 @@ void OffboardWrapper::rc_state_Callback(const mavros_msgs::VFR_HUD::ConstPtr &ms
 //                            wrap_data.wrapper_current_attitude_[2]);
 // }
 // in real
- void OffboardWrapper::visualCallback(const nav_msgs::Odometry::ConstPtr& msg){
+ void OffboardWrapper::visualCallback(const nav_msgs::Odometry::ConstPtr& msg, const geometry_msgs::PoseStampedConstPtr& msg1){
    nav_msgs::Odometry wrapper_current_vrpn_ = *msg;
+
+
    tf::Quaternion rq;
    Vector3d cur_position_(wrapper_current_vrpn_.pose.pose.position.x, 
                          wrapper_current_vrpn_.pose.pose.position.y, 
@@ -203,7 +210,11 @@ void OffboardWrapper::rc_state_Callback(const mavros_msgs::VFR_HUD::ConstPtr &ms
    Vector3d cur_velocity_(wrapper_current_vrpn_.twist.twist.linear.x,
                          wrapper_current_vrpn_.twist.twist.linear.y,
                          wrapper_current_vrpn_.twist.twist.linear.z);
-   
+  ROS_INFO("The cur_x is %f",wrapper_current_vrpn_.pose.pose.position.x);
+  ROS_INFO("The cur_y is %f",wrapper_current_vrpn_.pose.pose.position.y);
+  ROS_INFO("The cur_z is %f",wrapper_current_vrpn_.pose.pose.position.z);
+
+  ROS_INFO("The lidar_z is %f",msg1->pose.position.z);
   // Vector3d cur_velosity_;
   // cur_velosity_ = (cur_position_ - wrap_data.wrapper_last_position_) / (ros::Time::now() - wrap_data.last_v_time).toNSec();
   // wrap_data.last_v_time = ros::Time::now();
