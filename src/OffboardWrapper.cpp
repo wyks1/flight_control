@@ -23,12 +23,16 @@ OffboardWrapper::OffboardWrapper(geometry_msgs::PoseStamped position_setpoint, s
   subscriber();
   start_position_setpoint_ = position_setpoint;
   planning_position_setpoint_ = position_setpoint;
+  autohover_position_setpoint_.pose.position.x = start_position_setpoint_.pose.position.x;
+  autohover_position_setpoint_.pose.position.y = start_position_setpoint_.pose.position.y;
+  autohover_position_setpoint_.pose.position.z= start_position_setpoint_.pose.position.z/5;
   double psi_cmd_=0;
   current_status_ = HOVER;
-
+  use_lidar_data = false;
   hover_flag = 1;
   planning_flag = 1;
   end_flag = 1;
+  not_achieved_flag = 1;
 }
 
 OffboardWrapper::~OffboardWrapper()
@@ -86,6 +90,37 @@ void OffboardWrapper::isAtSetpoint()
     current_status_ = HOVER;
 }
 
+bool OffboardWrapper::isAutoHoverpoint(geometry_msgs::PoseStamped  set_position)
+{
+  Eigen::Vector3d hp_(set_position.pose.position.x,
+                      set_position.pose.position.y,
+                      set_position.pose.position.z);
+  wrap_data.wrapper_current_position_[2] = wrap_data.lidar_z_position;
+
+  Eigen::Vector3d dis_ = wrap_data.wrapper_current_position_ - hp_;
+  ROS_INFO("isAutoHoverpoint", wrap_data.wrapper_current_position_[2]);
+  if (dis_.norm() < 0.1)
+  {
+    if (hover_flag)
+    {
+      start_hover_t = ros::Time::now();
+      hover_flag = 0;
+    }
+    if ((ros::Time::now() - start_hover_t).toSec() >= 3.0){
+        // current_status_ = HOVER; // enter planning
+      if(set_position.pose.position.z == start_position_setpoint_.pose.position.z){
+          ROS_INFO("AutoHover Success");
+          current_status_ = PLANNING;
+      }
+     return true;
+    }
+     
+  }
+  else
+    current_status_ = HOVER;
+    return false;
+}
+
 void OffboardWrapper::topicPublish()
 {
   wrap_data.thrust_attitude_cmd_.header.frame_id = "base_footprint";
@@ -104,7 +139,6 @@ void OffboardWrapper::topicPublish()
 
   wrap_data.is_ready_.data = current_status_;
   m_Publisher.wrapper_status_pub.publish(wrap_data.is_ready_);
-
 
 }
 
@@ -204,13 +238,16 @@ void OffboardWrapper::rc_state_Callback(const mavros_msgs::VFR_HUD::ConstPtr &ms
    tf::Quaternion rq;
    Vector3d cur_position_(wrapper_current_vrpn_.pose.pose.position.x, 
                          wrapper_current_vrpn_.pose.pose.position.y, 
-                         msg1->pose.position.z);
-
+                         wrapper_current_vrpn_.pose.pose.position.z);
+                         //msg1->pose.position.z);
+  double  Lidar_z_position = msg1->pose.position.z;
 
    Vector3d cur_velocity_(wrapper_current_vrpn_.twist.twist.linear.x,
                          wrapper_current_vrpn_.twist.twist.linear.y,
-                         msg1->pose.orientation.z);
-  /*ROS_INFO("The cur_x is %f",wrapper_current_vrpn_.pose.pose.position.x);
+                         wrapper_current_vrpn_.twist.twist.linear.z);
+  double  Lidar_z_velocity = msg1->pose.orientation.z;
+                         //msg1->pose.orientation.z);
+  /*ROS_INFO("The cur_x is %f",wrapper_not_achieved_flagcurrent_vrpn_.pose.pose.position.x);
   ROS_INFO("The cur_y is %f",wrapper_current_vrpn_.pose.pose.position.y);
   ROS_INFO("The cur_z is %f",wrapper_current_vrpn_.pose.pose.position.z);
 
@@ -224,6 +261,8 @@ void OffboardWrapper::rc_state_Callback(const mavros_msgs::VFR_HUD::ConstPtr &ms
 
   wrap_data.wrapper_current_position_ = cur_position_;
   wrap_data.wrapper_current_velocity_ = cur_velocity_;
+  wrap_data.lidar_z_position = Lidar_z_position;
+  wrap_data.lidar_z_velocity = Lidar_z_velocity;
 
 
   tf::quaternionMsgToTF(wrapper_current_vrpn_.pose.pose.orientation, rq);
@@ -264,10 +303,10 @@ void OffboardWrapper::run()
 {
   wrap_data.begin_time = ros::Time::now();
   QuadrotorFeedbackController c1(start_position_setpoint_, &wrap_data);
-  QuadrotorAggressiveController c2(&wrap_data);
-  getEndPoint(); // end_position_setpoint_ from this function
-  c2.readCsvData(dataset_address);
-  QuadrotorFeedbackController c3(end_position_setpoint_, &wrap_data);
+  //QuadrotorAggressiveController c2(&wrap_data);
+  //getEndPoint(); // end_position_setpoint_ from this function
+  //c2.readCsvData(dataset_address);
+  //QuadrotorFeedbackController c3(end_position_setpoint_, &wrap_data);
 
   ros::Rate rate(LOOP_FREQUENCY);
 
@@ -294,20 +333,25 @@ void OffboardWrapper::run()
     switch (current_status_)
     {
     case HOVER:
-      printf("enter hover!!\n");
-      isAtSetpoint();
-      c1.loadLatestData();
+      //ROS_INFO("enter hover!!\n");
+      if(isAutoHoverpoint(autohover_position_setpoint_)&&not_achieved_flag )
+          autohover_position_setpoint_.pose.position.z = autohover_position_setpoint_.pose.position.z + start_position_setpoint_.pose.position.z/5;
+
+      if(autohover_position_setpoint_.pose.position.z == start_position_setpoint_.pose.position.z)
+          not_achieved_flag = 0;
+  
+      c1.loadAutoHoverData();
       if(!wrap_data.rc_state){
         c1.reset_error_sum_both_pv();
-        ROS_INFO("RESET I");
+        //ROS_INFO("RESET I");
       }
-      c1.positionPlanningFeedback(start_position_setpoint_);
+      c1.positionPlanningFeedback(autohover_position_setpoint_);
       c1.velocityPlanningFeedback(0);
       start_planning_t_ = ros::Time::now();
       break;
 
     case READY:
-      printf("enter ready!!\n");
+     // ROS_INFO("enter ready!!\n");
       // if(ready_flag) current_status_ = PLANNING;
       current_status_ = PLANNING;
       c1.loadLatestData();
@@ -318,7 +362,7 @@ void OffboardWrapper::run()
 
 
     case PLANNING:
-      printf("enter planning!!\n");
+      ROS_INFO("enter planning!!\n");
       c1.loadLatestData();
       c1.positionPlanningFeedback(planning_position_setpoint_);
       c1.velocityPlanningFeedback(psi_cmd_);

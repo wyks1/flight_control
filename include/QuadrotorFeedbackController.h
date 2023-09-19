@@ -34,6 +34,7 @@ struct DataCentre{
     Eigen::Vector3d wrapper_last_position_;
     ros::Time last_v_time;
     Eigen::Vector3d wrapper_current_position_, wrapper_current_velocity_, wrapper_current_attitude_, wrapper_current_acc_;
+    double lidar_z_position , lidar_z_velocity;
     std::string current_state_;
         
     mavros_msgs::AttitudeTarget thrust_attitude_cmd_;
@@ -54,7 +55,6 @@ class QuadrotorFeedbackController{
         geometry_msgs::TwistStamped velocity_setpoint_;
         geometry_msgs::Vector3Stamped  position_int,velocity_int;
         mavros_msgs::AttitudeTarget thrust_attitude_cmd_;
-
 
         std::string current_state_;
         std::string current_status_;
@@ -79,6 +79,7 @@ class QuadrotorFeedbackController{
         ~QuadrotorFeedbackController();
 
         void loadLatestData();
+        void loadAutoHoverData();
         void reset_error_sum_both_pv();
         //void positionControlFeedback();
         //void velocityControlFeedback();
