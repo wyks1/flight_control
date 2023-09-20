@@ -224,9 +224,9 @@ velocity_error_before_ = velocity_error_;
   if(thrust_cmd_ <= 0.01)
     thrust_cmd_ = 0;
   // printf("thrust_cmd: %lf \n", thrust_cmd_);
-  ROS_INFO("The cur z is %f",current_position_[2]);
-  ROS_INFO("The cur z velocity  is %f",current_velocity_[2]);
-  if(current_position_[2]<0)
+ //ROS_INFO("The cur z is %f",current_position_[2]);
+  //ROS_INFO("The cur z velocity  is %f",current_velocity_[2]);
+  if(current_position_[2]<=0)
   {
       ROS_INFO("the t265 is wrong");
       thrust_cmd_ = 0.380;
@@ -327,6 +327,8 @@ void QuadrotorFeedbackController::loadAutoHoverData(){
   current_position_[2] = data_ptr->lidar_z_position;
   current_velocity_[2] = data_ptr->lidar_z_velocity;
 }
+
+
 void QuadrotorFeedbackController::reset_error_sum_both_pv(){
   position_error_sum_(0) = 0;
   position_error_sum_(1) = 0;

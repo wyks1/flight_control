@@ -80,7 +80,7 @@ void OffboardWrapper::isAtSetpoint()
       start_hover_t = ros::Time::now();
       hover_flag = 0;
     }
-    if ((ros::Time::now() - start_hover_t).toSec() >= 3.0){
+    if ((ros::Time::now() - start_hover_t).toSec() >= 2.5){
         // current_status_ = HOVER; // enter planning
       current_status_ = PLANNING;
     }
@@ -98,7 +98,7 @@ bool OffboardWrapper::isAutoHoverpoint(geometry_msgs::PoseStamped  set_position)
   wrap_data.wrapper_current_position_[2] = wrap_data.lidar_z_position;
 
   Eigen::Vector3d dis_ = wrap_data.wrapper_current_position_ - hp_;
-  ROS_INFO("isAutoHoverpoint", wrap_data.wrapper_current_position_[2]);
+  ROS_INFO("inAutoHoverpoint");
   if (dis_.norm() < 0.1)
   {
     if (hover_flag)
@@ -106,11 +106,11 @@ bool OffboardWrapper::isAutoHoverpoint(geometry_msgs::PoseStamped  set_position)
       start_hover_t = ros::Time::now();
       hover_flag = 0;
     }
-    if ((ros::Time::now() - start_hover_t).toSec() >= 3.0){
+    if ((ros::Time::now() - start_hover_t).toSec() >= 2.5){
         // current_status_ = HOVER; // enter planning
       if(set_position.pose.position.z == start_position_setpoint_.pose.position.z){
           ROS_INFO("AutoHover Success");
-          current_status_ = PLANNING;
+          current_status_ = HOVER;
       }
      return true;
     }
@@ -333,7 +333,7 @@ void OffboardWrapper::run()
     switch (current_status_)
     {
     case HOVER:
-      //ROS_INFO("enter hover!!\n");
+      ROS_INFO("enter hover!!\n");
       if(isAutoHoverpoint(autohover_position_setpoint_)&&not_achieved_flag )
           autohover_position_setpoint_.pose.position.z = autohover_position_setpoint_.pose.position.z + start_position_setpoint_.pose.position.z/5;
 
@@ -343,7 +343,7 @@ void OffboardWrapper::run()
       c1.loadAutoHoverData();
       if(!wrap_data.rc_state){
         c1.reset_error_sum_both_pv();
-        //ROS_INFO("RESET I");
+        ROS_INFO("RESET I");
       }
       c1.positionPlanningFeedback(autohover_position_setpoint_);
       c1.velocityPlanningFeedback(0);
