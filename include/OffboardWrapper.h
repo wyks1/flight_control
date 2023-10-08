@@ -14,7 +14,7 @@
 class OffboardWrapper{
     private:       
         ros::NodeHandle nh;
-        geometry_msgs::PoseStamped start_position_setpoint_, end_position_setpoint_,planning_position_setpoint_,autohover_position_setpoint_;
+        geometry_msgs::PoseStamped start_position_setpoint_, end_position_setpoint_,planning_position_setpoint_,autohover_position_setpoint_,waypoint_begin_pub_;
         ros::Time start_planning_t_, start_hover_t;
 
         // std::string current_status_;
@@ -29,6 +29,7 @@ class OffboardWrapper{
         bool ready_flag;
         bool use_lidar_data;
         bool not_achieved_flag;
+        bool begin_once_flag;
 
         void isAtSetpoint();
         bool isAutoHoverpoint(geometry_msgs::PoseStamped  set_position);
@@ -77,6 +78,7 @@ class OffboardWrapper{
             ros::Publisher attitude_setpoint_pub;
             ros::Publisher attitude_cureuler_pub;
             ros::Publisher wrapper_new_velocity_pub;
+            ros::Publisher waypoint_begin_pub ;
 
             ros::Publisher wrapper_position_int_pub;
             ros::Publisher wrapper_velocity_int_pub;

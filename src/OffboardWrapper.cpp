@@ -4,12 +4,16 @@ OffboardWrapper::OffboardWrapper(geometry_msgs::PoseStamped position_setpoint, s
 {
   uav_id = id;
   dataset_address = dataset;
+  begin_once_flag = 1;
   // Publisher
   m_Publisher.wrapper_local_pos_pub_ = nh.advertise<geometry_msgs::PoseStamped>(uav_id + "/mavros/setpoint_position/local", 10);
   m_Publisher.wrapper_vision_pos_pub_ = nh.advertise<geometry_msgs::PoseStamped>(uav_id + "/mavros/vision_pose/pose", 10);
   m_Publisher.wrapper_attitude_pub_ = nh.advertise<mavros_msgs::AttitudeTarget>(uav_id + "/mavros/setpoint_raw/attitude", 10);
 
   m_Publisher.position_setpoint_pub = nh.advertise<geometry_msgs::PoseStamped>(node_id + "/position_setpoint", 10);
+  if(begin_once_flag){
+    m_Publisher.waypoint_begin_pub = nh.advertise<geometry_msgs::PoseStamped>(node_id + "/waypoint_begin_fuel", 10);
+  }
   m_Publisher.velocity_setpoint_pub = nh.advertise<geometry_msgs::TwistStamped>(node_id + "/velocity_setpoint", 10);
   m_Publisher.attitude_setpoint_pub = nh.advertise<geometry_msgs::Vector3Stamped>(node_id + "/attitude_setpoint", 10);
   m_Publisher.attitude_cureuler_pub = nh.advertise<geometry_msgs::Vector3Stamped>(node_id + "/attitude_euler", 10);
@@ -25,7 +29,8 @@ OffboardWrapper::OffboardWrapper(geometry_msgs::PoseStamped position_setpoint, s
   planning_position_setpoint_ = position_setpoint;
   autohover_position_setpoint_.pose.position.x = start_position_setpoint_.pose.position.x;
   autohover_position_setpoint_.pose.position.y = start_position_setpoint_.pose.position.y;
-  autohover_position_setpoint_.pose.position.z= start_position_setpoint_.pose.position.z/5;
+  autohover_position_setpoint_.pose.position.z= start_position_setpoint_.pose.position.z/3;
+  waypoint_begin_pub_.pose.position.z = -1;
   double psi_cmd_=0;
   current_status_ = HOVER;
   use_lidar_data = false;
@@ -33,6 +38,7 @@ OffboardWrapper::OffboardWrapper(geometry_msgs::PoseStamped position_setpoint, s
   planning_flag = 1;
   end_flag = 1;
   not_achieved_flag = 1;
+  
 }
 
 OffboardWrapper::~OffboardWrapper()
@@ -82,7 +88,9 @@ void OffboardWrapper::isAtSetpoint()
     }
     if ((ros::Time::now() - start_hover_t).toSec() >= 2.5){
         // current_status_ = HOVER; // enter planning
+        waypoint_begin_pub_.pose.position.z = 1;
       current_status_ = PLANNING;
+      
     }
      
   }
@@ -106,11 +114,11 @@ bool OffboardWrapper::isAutoHoverpoint(geometry_msgs::PoseStamped  set_position)
       start_hover_t = ros::Time::now();
       hover_flag = 0;
     }
-    if ((ros::Time::now() - start_hover_t).toSec() >= 2.5){
+    if ((ros::Time::now() - start_hover_t).toSec() >= 2.0){
         // current_status_ = HOVER; // enter planning
       if(set_position.pose.position.z == start_position_setpoint_.pose.position.z){
           ROS_INFO("AutoHover Success");
-          current_status_ = HOVER;
+          current_status_ =  PLANNING;
       }
      return true;
     }
@@ -129,6 +137,13 @@ void OffboardWrapper::topicPublish()
   m_Publisher.wrapper_attitude_pub_.publish(wrap_data.thrust_attitude_cmd_);
   
   m_Publisher.position_setpoint_pub.publish(wrap_data.pub_setpoint_position_);
+  if (begin_once_flag){
+    m_Publisher.waypoint_begin_pub.publish(waypoint_begin_pub_);
+    if(waypoint_begin_pub_.pose.position.z>0)
+    {
+      begin_once_flag=0;
+    }
+  }
   // std::cout << wrap_data.pub_setpoint_position_ << std::endl;
   m_Publisher.velocity_setpoint_pub.publish(wrap_data.pub_setpoint_velocity_);
   m_Publisher.attitude_setpoint_pub.publish(wrap_data.pub_setpoint_attitude_);
@@ -246,6 +261,7 @@ void OffboardWrapper::rc_state_Callback(const mavros_msgs::VFR_HUD::ConstPtr &ms
                          wrapper_current_vrpn_.twist.twist.linear.y,
                          wrapper_current_vrpn_.twist.twist.linear.z);
   double  Lidar_z_velocity = msg1->pose.orientation.z;
+  
                          //msg1->pose.orientation.z);
   /*ROS_INFO("The cur_x is %f",wrapper_not_achieved_flagcurrent_vrpn_.pose.pose.position.x);
   ROS_INFO("The cur_y is %f",wrapper_current_vrpn_.pose.pose.position.y);
@@ -335,7 +351,7 @@ void OffboardWrapper::run()
     case HOVER:
       ROS_INFO("enter hover!!\n");
       if(isAutoHoverpoint(autohover_position_setpoint_)&&not_achieved_flag )
-          autohover_position_setpoint_.pose.position.z = autohover_position_setpoint_.pose.position.z + start_position_setpoint_.pose.position.z/5;
+          autohover_position_setpoint_.pose.position.z = autohover_position_setpoint_.pose.position.z + start_position_setpoint_.pose.position.z/3;
 
       if(autohover_position_setpoint_.pose.position.z == start_position_setpoint_.pose.position.z)
           not_achieved_flag = 0;
@@ -363,6 +379,9 @@ void OffboardWrapper::run()
 
     case PLANNING:
       ROS_INFO("enter planning!!\n");
+      /*if(begin_once_flag)
+          isAtSetpoint();*/
+
       c1.loadLatestData();
       c1.positionPlanningFeedback(planning_position_setpoint_);
       c1.velocityPlanningFeedback(psi_cmd_);
