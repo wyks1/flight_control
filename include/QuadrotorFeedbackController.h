@@ -17,7 +17,7 @@
 #include "ParamLoad.h"
 
 
-#define LOOP_FREQUENCY 150
+#define LOOP_FREQUENCY 200
 #define PI 3.1415
 #define ZERO 0
 #define ONE 1

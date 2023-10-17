@@ -91,7 +91,7 @@ class OffboardWrapper{
         void rc_state_Callback(const mavros_msgs::VFR_HUD::ConstPtr& msg);
         void stateCallback(const mavros_msgs::State::ConstPtr& msg);
         //void visualCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);
-        void visualCallback(const nav_msgs::Odometry::ConstPtr& msg, const geometry_msgs::PoseStampedConstPtr& msg1);
+        void visualCallback(const nav_msgs::Odometry::ConstPtr& msg);//, const geometry_msgs::PoseStampedConstPtr& msg1);
         void velocityCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
         void accCallback(const geometry_msgs::TwistStamped::ConstPtr& msg);
         void localCallback(const geometry_msgs::PoseStamped::ConstPtr& msg);

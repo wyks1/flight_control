@@ -19,7 +19,7 @@ QuadrotorFeedbackController::QuadrotorFeedbackController(geometry_msgs::PoseStam
   // hover PID params init
   kp_hover_x_ = 1.4;
   kp_hover_y_ = 1.4;
-  kp_hover_z_ = 1.05;
+  kp_hover_z_ = 1.1;
   kp_hover_vx_ = 0.22;
   kp_hover_vy_ = -0.22;
   kp_hover_vz_ = 0.07;
@@ -86,7 +86,7 @@ void QuadrotorFeedbackController::positionPlanningFeedback(geometry_msgs::PoseSt
     position_i_x_ = 5;
   if(position_i_x_ < -5)
     position_i_x_ = -5;
-
+  ROS_INFO("current position is %f",current_position_(2));
   double position_i_y_ = ki_hover_y_use * position_error_sum_[1]; 
   if(position_i_y_ > 5)
     position_i_y_ = 5;

@@ -20,7 +20,7 @@ def thread_job():
 
 class VelocityBody:
  def __init__(self):
-        self.pos_pub = rospy.Publisher("Lidar_position", PoseStamped, queue_size = 10)
+        self.pos_pub = rospy.Publisher("/drone_1/Lidar_position", PoseStamped, queue_size = 10)
         self.add_thread = threading.Thread(target = thread_job)
         self.add_thread.start()
         self.current_position = Odometry()
